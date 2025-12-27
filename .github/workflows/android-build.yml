@@ -52,6 +52,15 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Check for Signing Key
+        id: check_keys
+        run: |
+          if [ -n "${{ secrets.SIGNING_KEY }}" ]; then
+            echo "has_signing=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_signing=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Inject Environment Variables
         run: |
           echo "VITE_APP_VERSION=${{ steps.version.outputs.version }}" >> .env
@@ -80,7 +89,7 @@ jobs:
           ./gradlew assembleRelease
 
       - name: Sign APK
-        if: ${{ secrets.SIGNING_KEY != '' }}
+        if: steps.check_keys.outputs.has_signing == 'true'
         uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
@@ -100,7 +109,7 @@ jobs:
           retention-days: 7
 
       - name: Upload Signed Release APK
-        if: ${{ secrets.SIGNING_KEY != '' }}
+        if: steps.check_keys.outputs.has_signing == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: sales-tracker-${{ steps.version.outputs.tag }}-release-signed
@@ -108,7 +117,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Unsigned Release APK
-        if: ${{ secrets.SIGNING_KEY == '' }}
+        if: steps.check_keys.outputs.has_signing == 'false'
         uses: actions/upload-artifact@v4
         with:
           name: sales-tracker-${{ steps.version.outputs.tag }}-release-unsigned
