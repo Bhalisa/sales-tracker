@@ -1,94 +1,107 @@
 name: Android Build
 
-on: push: branches: [ main ] pull_request: branches: [ main ]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-jobs: build-android: runs-on: ubuntu-latest env: CI: true
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
 
-steps:
-  - name: Checkout
-    uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  - name: Setup Node.js (required for Capacitor >= 22)
-    uses: actions/setup-node@v4
-    with:
-      node-version: '22.x'
-      cache: 'npm'
+      - name: Setup Node.js (required for Capacitor >= 22)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'npm'
 
-  - name: Install Dependencies
-    run: npm ci
+      - name: Install Dependencies
+        run: npm ci
 
-  - name: Extract Version
-    shell: bash
-    run: |
-      # Safely read version from package.json and export to GITHUB_ENV
-      if [ -f package.json ]; then
-        VERSION=$(node -p "require('./package.json').version")
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
-        echo "Extracted version $VERSION"
-      else
-        echo "package.json not found - setting VERSION=0.0.0"
-        echo "VERSION=0.0.0" >> $GITHUB_ENV
-      fi
+      - name: Extract Version
+        shell: bash
+        run: |
+          # Safely read version from package.json and export to GITHUB_ENV
+          if [ -f package.json ]; then
+            VERSION=$(node -p 'require("./package.json").version')
+            if [ -z "$VERSION" ]; then
+              echo "VERSION=0.0.0" >> $GITHUB_ENV
+              echo "package.json has no version field — defaulting VERSION=0.0.0"
+            else
+              echo "VERSION=$VERSION" >> $GITHUB_ENV
+              echo "Extracted version $VERSION"
+            fi
+          else
+            echo "package.json not found - setting VERSION=0.0.0"
+            echo "VERSION=0.0.0" >> $GITHUB_ENV
+          fi
 
-  - name: Check for Signing Key
-    run: |
-      # Add your checks here, or use secrets to ensure signing key exists
-      echo "Checking signing key..."
+      - name: Check for Signing Key
+        run: |
+          # Add your checks here, or use secrets to ensure signing key exists
+          echo "Checking signing key..."
 
-  - name: Inject Environment Variables
-    run: |
-      # Example: write secrets to env or files as needed
-      echo "INJECTED=true"
+      - name: Inject Environment Variables
+        run: |
+          # Example: write secrets to env or files as needed
+          echo "INJECTED=true"
 
-  - name: Build Web Assets
-    run: npm run build --if-present
+      - name: Build Web Assets
+        run: npm run build --if-present
 
-  - name: Sync Capacitor
-    run: npx cap sync android
+      - name: Sync Capacitor
+        run: npx cap sync android
 
-  - name: Setup Java (post-Android build setup)
-    uses: actions/setup-java@v4
-    with:
-      distribution: 'temurin'
-      java-version: '17'
+      - name: Setup Java (post-Android build setup)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-  - name: Build Android APKs
-    working-directory: android
-    run: |
-      ./gradlew assembleRelease -Pci
+      - name: Build Android APKs
+        working-directory: android
+        run: |
+          ./gradlew assembleRelease -Pci
 
-  - name: List APK outputs (debugging)
-    if: always()
-    run: |
-      echo "---- android/app/build/outputs ----"
-      ls -R android/app/build/outputs || true
+      - name: List APK outputs (debugging)
+        if: always()
+        run: |
+          echo "---- android/app/build/outputs ----"
+          ls -R android/app/build/outputs || true
 
-  - name: Sign APK
-    if: always()
-    run: |
-      # Add your signing commands here, or a placeholder step if signing happens elsewhere
-      echo "Signing APK (placeholder)"
+      - name: Sign APK
+        if: always()
+        run: |
+          # Add your signing commands here, or a placeholder step if signing happens elsewhere
+          echo "Signing APK (placeholder)"
 
-  - name: Upload Debug APKs
-    if: always()
-    uses: actions/upload-artifact@v4
-    with:
-      name: debug-apks
-      path: android/app/build/outputs/apk/debug/**/*.apk
+      - name: Upload Debug APKs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apks
+          path: android/app/build/outputs/apk/debug/**/*.apk
 
-  - name: Upload Release APKs
-    if: always()
-    uses: actions/upload-artifact@v4
-    with:
-      name: release-apks
-      path: android/app/build/outputs/apk/release/**/*.apk
+      - name: Upload Release APKs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apks
+          path: android/app/build/outputs/apk/release/**/*.apk
 
-  - name: Create GitHub Release
-    if: github.ref == 'refs/heads/main'
-    uses: ncipollo/release-action@v1
-    with:
-      tag: ${{ env.VERSION }}
-      name: Release ${{ env.VERSION }}
+      - name: Create GitHub Release
+        if: github.ref == 'refs/heads/main'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ env.VERSION }}
+          name: Release ${{ env.VERSION }}
 
-  - name: Post Setup Java
-    run: echo "Post-setup tasks complete"
+      - name: Post Setup Java
+        run: echo "Post-setup tasks complete"
