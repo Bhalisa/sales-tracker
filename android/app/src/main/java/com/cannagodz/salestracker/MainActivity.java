@@ -1,4 +1,4 @@
-package com.launchgremlin.salestracker;
+package com.cannagodz.salestracker;
 
 import com.getcapacitor.BridgeActivity;
 

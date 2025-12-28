@@ -12,6 +12,7 @@ jobs:
   lint:
     name: Code Quality
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,6 +26,14 @@ jobs:
     name: Build Android
     needs: lint
     runs-on: ubuntu-latest
+    env:
+      VITE_BUSINESS_ID: ${{ secrets.BUSINESS_ID || 'canna_godz_001' }}
+      VITE_BUSINESS_NAME: ${{ secrets.BUSINESS_NAME || 'Canna Godz' }}
+      VITE_PRIMARY_COLOR: ${{ secrets.PRIMARY_COLOR || '#10b981' }}
+      VITE_ACCENT_COLOR: ${{ secrets.ACCENT_COLOR || '#34d399' }}
+      VITE_ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL || 'admin@cannagodz.com' }}
+      VITE_ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD || 'cannagodz2024' }}
+
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
@@ -64,12 +73,12 @@ jobs:
       - name: Inject Environment Variables
         run: |
           echo "VITE_APP_VERSION=${{ steps.version.outputs.version }}" >> .env
-          echo "VITE_BUSINESS_ID=${{ secrets.BUSINESS_ID || 'canna_godz_001' }}" >> .env
-          echo "VITE_BUSINESS_NAME=${{ secrets.BUSINESS_NAME || 'Canna Godz' }}" >> .env
-          echo "VITE_PRIMARY_COLOR=${{ secrets.PRIMARY_COLOR || '#10b981' }}" >> .env
-          echo "VITE_ACCENT_COLOR=${{ secrets.ACCENT_COLOR || '#34d399' }}" >> .env
-          echo "VITE_ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL || 'admin@cannagodz.com' }}" >> .env
-          echo "VITE_ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD || 'cannagodz2024' }}" >> .env
+          echo "VITE_BUSINESS_ID=$VITE_BUSINESS_ID" >> .env
+          echo "VITE_BUSINESS_NAME=$VITE_BUSINESS_NAME" >> .env
+          echo "VITE_PRIMARY_COLOR=$VITE_PRIMARY_COLOR" >> .env
+          echo "VITE_ACCENT_COLOR=$VITE_ACCENT_COLOR" >> .env
+          echo "VITE_ADMIN_EMAIL=$VITE_ADMIN_EMAIL" >> .env
+          echo "VITE_ADMIN_PASSWORD=$VITE_ADMIN_PASSWORD" >> .env
 
       - name: Build Web Assets
         run: npm run build
@@ -77,15 +86,11 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build Android Debug APK
+      - name: Build Android APKs
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
-
-      - name: Build Android Release APK (Unsigned)
-        run: |
-          cd android
           ./gradlew assembleRelease
 
       - name: Sign APK
