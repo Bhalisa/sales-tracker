@@ -42,17 +42,14 @@ jobs:
             echo "package.json not found - setting VERSION=0.0.0"
             echo "VERSION=0.0.0" >> $GITHUB_ENV
           fi
-
       - name: Check for Signing Key
         run: |
           # Add your checks here, or use secrets to ensure signing key exists
           echo "Checking signing key..."
-
       - name: Inject Environment Variables
         run: |
           # Example: write secrets to env or files as needed
           echo "INJECTED=true"
-
       - name: Build Web Assets
         run: npm run build --if-present
 
@@ -65,23 +62,27 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Make gradlew executable
+        working-directory: android
+        run: chmod +x gradlew
+
       - name: Build Android APKs
         working-directory: android
         run: |
           ./gradlew assembleRelease -Pci
-
+          
       - name: List APK outputs (debugging)
         if: always()
         run: |
           echo "---- android/app/build/outputs ----"
           ls -R android/app/build/outputs || true
-
+          
       - name: Sign APK
         if: always()
         run: |
           # Add your signing commands here, or a placeholder step if signing happens elsewhere
           echo "Signing APK (placeholder)"
-
+          
       - name: Upload Debug APKs
         if: always()
         uses: actions/upload-artifact@v4
@@ -104,4 +105,4 @@ jobs:
           name: Release ${{ env.VERSION }}
 
       - name: Post Setup Java
-        run: echo "Post-setup tasks complete"
+        run: echo "Post-setup tasks complete
