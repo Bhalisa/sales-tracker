@@ -71,7 +71,7 @@ jobs:
       - name: Build Android APKs
         working-directory: android
         run: |
-          ./gradlew assembleRelease -Pci
+          ./gradlew assembleDebug assembleRelease -Pci
           
       - name: List APK outputs (debugging)
         if: always()
