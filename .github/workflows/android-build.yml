@@ -107,4 +107,4 @@ jobs:
           name: Release ${{ env.VERSION }}
 
       - name: Post Setup Java
-        run: echo "Post-setup tasks complete
+        run: echo 'Post-setup tasks complete'
